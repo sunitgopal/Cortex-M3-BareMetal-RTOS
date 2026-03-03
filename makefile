@@ -2,22 +2,55 @@ PROJECT = scheduler
 CPU := cortex-m3
 BOARD := stm32vldiscovery
 
-OBJS = vector_table.o reset_handler.o systick_handler.o tasks.o kernel.o pendsv_handler.o
+# Toolchain
+CC = arm-none-eabi-gcc
+AS = arm-none-eabi-as
+LD = arm-none-eabi-gcc
+OBJDUMP = arm-none-eabi-objdump
+READELF = arm-none-eabi-readelf
 
-qemu:
-	arm-none-eabi-as -mthumb -mcpu=$(CPU) -g -c vector_table.s -o vector_table.o
-	arm-none-eabi-as -mthumb -mcpu=$(CPU) -g -c reset_handler.s -o reset_handler.o
-	arm-none-eabi-as -mthumb -mcpu=$(CPU) -g -c systick_handler.s -o systick_handler.o
-	arm-none-eabi-as -mthumb -mcpu=$(CPU) -g -c tasks.s -o tasks.o
-	arm-none-eabi-as -mthumb -mcpu=$(CPU) -g -c kernel.s -o kernel.o
-	arm-none-eabi-as -mthumb -mcpu=$(CPU) -g -c pendsv_handler.s -o pendsv_handler.o
-	arm-none-eabi-ld -Tlinker.ld $(OBJS) -o scheduler.elf
-	arm-none-eabi-objdump -D -S scheduler.elf > scheduler.elf.lst
-	arm-none-eabi-readelf -a scheduler.elf > scheduler.elf.debug
+# Flags
+CFLAGS = -mcpu=$(CPU) -mthumb -O0 -g -Wall  -I./lib
+ASFLAGS = -mcpu=$(CPU) -mthumb -g
+LDFLAGS = -T linker.ld -nostdlib
+
+# Source Files
+ASM_SOURCES = \
+    kernel/vector_table.s \
+    kernel/reset_handler.s \
+    kernel/systick_handler.s \
+    kernel/pendsv_handler.s \
+    kernel/kernel.s \
+    app/tasks.s
+
+C_SOURCES = \
+    lib/circular_buffer.c \
+    lib/static_pool.c
+
+# Object Files
+OBJS = $(ASM_SOURCES:.s=.o) $(C_SOURCES:.c=.o)
+
+all: $(PROJECT).elf
+
+# Rule to compile C files
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule to assemble S files
+%.o: %.s
+	$(AS) $(ASFLAGS) -c $< -o $@
+
+# Linker
+$(PROJECT).elf: $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) -o $@
+	$(OBJDUMP) -D -S $@ > $@.lst
+	$(READELF) -a $@ > $@.debug
+
+qemu: all
 	qemu-system-arm -S -M $(BOARD) -cpu $(CPU) -nographic -kernel $(PROJECT).elf -gdb tcp::1234
 
 gdb:
 	gdb-multiarch -q $(PROJECT).elf -ex "target remote localhost:1234"
 
 clean:
-	rm -rf *.out *.elf .gdb_history *.lst *.debug *.o
+	rm -rf $(OBJS) *.out *.elf .gdb_history *.lst *.debug
