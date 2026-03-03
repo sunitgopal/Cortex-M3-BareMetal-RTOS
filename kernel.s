@@ -69,9 +69,24 @@ os_kernel_launch:
     ldmia sp!, {lr}         // Pop PC into LR (We use LR as a temp holder for the address)
     add sp, sp, #4          // Skip xPSR
 
-    /* 5. Enable Interrupts */
+    /* 5. Copy current SP into PSP */
+    mov r0, sp              // Since <msr psp, sp> is not allowed
+    msr psp, r0             // Move to Special Register from Register
+
+    /* 6. Reset MSP to top-of-RAM */
+    ldr r0, =0x20002000
+    msr msp, r0
+
+    /* 7. Flip the switch: MSP -> PSP */
+    mov r0, #2
+    msr control, r0
+
+    /* 8. Flush instrn-pipeline */
+    isb                     // Instruction Synchrnzn Barrier
+
+    /* 9. Enable Interrupts */
     cpsie i                 // PRIMASK = 0 (Enable Interrupts globally)
 
-    /* 6. Launch! */
+    /* 10. Launch! */
     bx lr                   /* Branch to the address we popped into LR (Task 0 entry)
                                 i.e., Jump to task0    */
