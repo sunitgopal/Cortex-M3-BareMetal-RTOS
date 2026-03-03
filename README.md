@@ -12,6 +12,20 @@ This project bypasses all vendor Hardware Abstraction Layers (HALs) and standard
 * **Lock-Free DMA Synergy:** Implements bitwise (`&`) wrapped circular buffers designed for lock-free, single-producer/single-consumer data pipelines, allowing DMA controllers to saturate RAM without fighting the CPU.
 * **C & Assembly Unification:** A custom GNU Make build system that seamlessly links high-level C data structures with pure Thumb-2 assembly core handlers using a custom `.ld` linker script.
 
+## 🚀 Quick Start (Docker / QEMU)
+This project is fully containerized using a VS Code .devcontainer to ensure identical toolchain execution across all host machines.
+
+1. Clone and open in VS Code (Requires Dev Containers extension)
+
+2. Build the ELF binary:
+`make`
+
+3. Launch the QEMU ARM Emulator:
+`make qemu`
+
+4. Attach the GDB Debugger (in a new terminal):
+`make gdb`
+
 ## 📂 Directory Structure
 
 ```text
