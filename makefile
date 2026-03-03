@@ -10,7 +10,7 @@ OBJDUMP = arm-none-eabi-objdump
 READELF = arm-none-eabi-readelf
 
 # Flags
-CFLAGS = -mcpu=$(CPU) -mthumb -O0 -g -Wall  -I./lib
+CFLAGS = -mcpu=$(CPU) -mthumb -O0 -g -Wall -ffreestanding -I./lib
 ASFLAGS = -mcpu=$(CPU) -mthumb -g
 LDFLAGS = -T linker.ld -nostdlib
 
